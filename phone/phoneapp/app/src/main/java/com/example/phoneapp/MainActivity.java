@@ -5,27 +5,47 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
+import com.mbientlab.metawear.Data;
+import com.mbientlab.metawear.Route;
+import com.mbientlab.metawear.Subscriber;
+import com.mbientlab.metawear.builder.RouteBuilder;
+import com.mbientlab.metawear.builder.RouteComponent;
+import com.mbientlab.metawear.data.Acceleration;
+import com.mbientlab.metawear.module.Accelerometer;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
+import com.mbientlab.metawear.MetaWearBoard;
+import com.mbientlab.metawear.android.BtleService;
 
-public class MainActivity extends AppCompatActivity implements IBaseGpsListener {
+import bolts.Continuation;
+import bolts.Task;
+
+
+public class MainActivity extends AppCompatActivity implements IBaseGpsListener , ServiceConnection {
+    private BtleService.LocalBinder serviceBinder;
+    private MetaWearBoard board;
+    private Accelerometer accelerometer;
     FirebaseDatabase database = FirebaseDatabase.getInstance();
     DatabaseReference myRef = database.getReference("Heart rate");
     private static final int PERMISSION_LOCATION = 1000;
@@ -36,31 +56,18 @@ public class MainActivity extends AppCompatActivity implements IBaseGpsListener 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        // Bind the service when the activity is created
+        getApplicationContext().bindService(new Intent(this, BtleService.class),
+                this, Context.BIND_AUTO_CREATE);
+
+        //get location
         tv_location = findViewById(R.id.tv_Loction);
         b_loction = findViewById(R.id.b_loction);
         getData = findViewById(R.id.getData);
-        myRef.addValueEventListener(new ValueEventListener() {
-            private static final String TAG = " ";
-
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                String value = dataSnapshot.getValue(String.class);
-                getData.setText(value);
-
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Log.w(TAG, "Failed to read value.", error.toException());
-
-            }
-        });
-
-
-
         b_loction.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
                 //check for location permission
                 if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
                 checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -71,6 +78,14 @@ public class MainActivity extends AppCompatActivity implements IBaseGpsListener 
                 }
             }
         });
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        // Unbind the service when the activity is destroyed
+        getApplicationContext().unbindService(this);
     }
 
     @Override
@@ -124,6 +139,66 @@ public class MainActivity extends AppCompatActivity implements IBaseGpsListener 
 
     @Override
     public void onGpsStatusChanged(int event) {
+
+    }
+
+    @Override
+    public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+// Typecast the binder to the service's LocalBinder class
+        serviceBinder = (BtleService.LocalBinder) iBinder;
+        Log.i("freefall" , "service connected");
+        retrieveBoard("00:11:22:33:FF:EE");
+    }
+
+    @Override
+    public void onServiceDisconnected(ComponentName componentName) {
+
+    }
+    public void retrieveBoard(final String macAdd) {
+
+        final BluetoothManager btManager=
+                (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+        final BluetoothDevice remoteDevice=
+                btManager.getAdapter().getRemoteDevice(macAdd);
+
+        // Create a MetaWear board object for the Bluetooth Device
+        board= serviceBinder.getMetaWearBoard(remoteDevice);
+        board.connectAsync().onSuccessTask(new Continuation<Void, Task<Void>>() {
+            @Override
+            public Task<Void> then(Task<Void> task) throws Exception {
+               if(task.isFaulted()){
+                   Log.i("Free Fall" , "Fail" + task.getError());
+               }else{
+                   Log.i("Free Fall" , "connected to " + macAdd);
+               }
+                Accelerometer accelerometer= board.getModule(Accelerometer.class);
+                accelerometer.configure()
+                        .odr(25f)       // Set sampling frequency to 25Hz, or closest valid ODR
+                        .range(4f)      // Set data range to +/-4g, or closet valid range
+                        .commit();
+               return accelerometer.acceleration().addRouteAsync(new RouteBuilder() {
+                   @Override
+                   public void configure(RouteComponent routeComponent) {
+                       routeComponent.stream(new Subscriber() {
+                           @Override
+                           public void apply(Data data, Object... env) {
+                               System.out.println("+++++++++++++++++++++++++++++");
+                               Log.i("MainActivity", data.value(Acceleration.class).toString());
+                               System.out.println("+++++++++++++++++++++++++++++");
+                           }
+                       });
+                   }
+               }).continueWith(new Continuation<Route, Void>() {
+                   @Override
+                   public Void then(Task<Route> task) throws Exception {
+                       accelerometer.acceleration().start();
+                       accelerometer.start();
+                       return null;
+                   }
+               });
+            }
+        });
+
 
     }
 }
