@@ -2,6 +2,7 @@ package com.example.phoneapp;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -9,10 +10,13 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.content.ComponentName;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.wifi.WifiInfo;
@@ -22,8 +26,14 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.mbientlab.metawear.Data;
@@ -31,6 +41,9 @@ import com.mbientlab.metawear.Route;
 import com.mbientlab.metawear.Subscriber;
 import com.mbientlab.metawear.builder.RouteBuilder;
 import com.mbientlab.metawear.builder.RouteComponent;
+import com.mbientlab.metawear.builder.filter.Comparison;
+import com.mbientlab.metawear.builder.filter.ThresholdOutput;
+import com.mbientlab.metawear.builder.function.Function1;
 import com.mbientlab.metawear.data.Acceleration;
 import com.mbientlab.metawear.module.Accelerometer;
 import com.google.firebase.database.DatabaseReference;
@@ -38,14 +51,20 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.mbientlab.metawear.MetaWearBoard;
 import com.mbientlab.metawear.android.BtleService;
 
+import java.util.ArrayList;
+
 import bolts.Continuation;
 import bolts.Task;
 
 
-public class MainActivity extends AppCompatActivity implements IBaseGpsListener , ServiceConnection {
-    private BtleService.LocalBinder serviceBinder;
-    private MetaWearBoard board;
-    private Accelerometer accelerometer;
+public class MainActivity extends AppCompatActivity implements IBaseGpsListener {
+    private static final int MY_PERMISSIONS_REQUEST_FINE = 2;
+
+    private Button start,stop,addContacts;
+    ListView lv;
+    EditText edit;
+    private SQLiteDatabase sql;
+    String provider;
     FirebaseDatabase database = FirebaseDatabase.getInstance();
     DatabaseReference myRef = database.getReference("Heart rate");
     private static final int PERMISSION_LOCATION = 1000;
@@ -56,9 +75,24 @@ public class MainActivity extends AppCompatActivity implements IBaseGpsListener 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        // Bind the service when the activity is created
-        getApplicationContext().bindService(new Intent(this, BtleService.class),
-                this, Context.BIND_AUTO_CREATE);
+        Log.d("Before Permission Check", "onCreate: ");
+
+        //SMS and GPS Permission
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
+
+            int PERMISSION_ALL = 1;
+            String[] PERMISSIONS = {Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.SEND_SMS};
+            ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
+//            return;
+        }
+        Log.d("After Permission Check", "onCreate:");
+
+        start = (Button) findViewById(R.id.start);
+        stop = (Button) findViewById(R.id.end);
+        addContacts = (Button) findViewById(R.id.addContacts);
+        lv = (ListView) findViewById(R.id.lv);
+        edit = (EditText) findViewById(R.id.edit);
 
         //get location
         tv_location = findViewById(R.id.tv_Loction);
@@ -76,18 +110,102 @@ public class MainActivity extends AppCompatActivity implements IBaseGpsListener 
                 }else{
                     showLocation();
                 }
+
             }
         });
+        DBHelper dpHelper = new DBHelper(this);
+        sql = dpHelper.getWritableDatabase();
+        Cursor cursor = getAllContacts();
+        final ArrayAdapter<String> arrayAdapter;
+
+        Toast.makeText(getApplicationContext(),"Wear Your Helmet and Start Tracking",Toast.LENGTH_SHORT).show();
+
+
+        start.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                Log.d("Start Button", "Pressed");
+                String count = "SELECT count(*) FROM "+ContactContract.TABLE_NAME;
+                Cursor mcursor = sql.rawQuery(count, null);
+                mcursor.moveToFirst();
+                int icount = mcursor.getInt(0);
+                if(icount>0){
+                    Toast.makeText(getApplicationContext(),"Safe riding! We track you for safety",Toast.LENGTH_SHORT).show();
+                    Intent intent= new Intent(getApplicationContext(), Fall.class);
+                    startService(intent);
+                    System.out.println(startService(intent));
+                }else{
+                    Toast.makeText(getApplicationContext(),"Add at least one contact then try again",Toast.LENGTH_SHORT).show();
+                }
+                mcursor.close();
+            }
+        });
+        stop.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                Log.d("Stop Button", "Pressed");
+                Intent intent= new Intent(getApplicationContext(), Fall.class);
+                stopService(intent);
+                System.out.println(String.valueOf(startService(intent)));
+            }
+        });
+
+        ArrayList<String> list = new ArrayList<String>();
+        addContacts.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                ArrayList<String> list = new ArrayList<String>();
+                Log.d("Adding Contacts", addContacts.toString());
+                //Insert into db
+                if(edit.getText().toString().length() != 10 ){
+                    Toast.makeText(getApplicationContext(),"Please enter again!",Toast.LENGTH_SHORT).show();
+                }else{
+                    addNewContact(edit.getText().toString());
+                    Toast.makeText(getApplicationContext(),"Contact Added",Toast.LENGTH_SHORT).show();
+                    Cursor cursor = getAllContacts();
+                    if (cursor.moveToFirst()){
+                        do{
+                            String data = cursor.getString(cursor.getColumnIndexOrThrow("contact"));
+                            list.add(data);
+                            // do what ever you want here
+                        }while(cursor.moveToNext());
+                    }
+                    cursor.close();
+                    ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.add);
+                    arrayAdapter.addAll(list);
+                    lv.setAdapter(arrayAdapter);
+                }
+                edit.setText("");
+            }
+        });
+        lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> adapterView, View view, int i, long l) {
+                Log.v("long clicked","pos: " + i  + " long value is :"+l);
+                //Toast.makeText(getApplicationContext(),lv.getItemAtPosition(i).toString(), Toast.LENGTH_LONG).show();
+                removeContact(lv.getItemAtPosition(i).toString());
+                //lv.remove(i);
+                Object remove = lv.getAdapter().getItem(i);
+                ArrayAdapter arrayAdapter1 = (ArrayAdapter)lv.getAdapter();
+                arrayAdapter1.remove(remove);
+                return false;
+            }
+        });
+        if (cursor.moveToFirst()){
+            do{
+                String data = cursor.getString(cursor.getColumnIndexOrThrow("contact"));
+                list.add(data);
+                // do what ever you want here
+            }while(cursor.moveToNext());
+        }
+        arrayAdapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.add);
+        arrayAdapter.addAll(list);
+        lv.setAdapter(arrayAdapter);
     }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        // Unbind the service when the activity is destroyed
-        getApplicationContext().unbindService(this);
+    public Cursor getAllContacts(){
+        return sql.query(ContactContract.TABLE_NAME,null,null,null,null,null,ContactContract.COLUMN_CONTACT);
     }
-
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -142,63 +260,16 @@ public class MainActivity extends AppCompatActivity implements IBaseGpsListener 
 
     }
 
-    @Override
-    public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
-// Typecast the binder to the service's LocalBinder class
-        serviceBinder = (BtleService.LocalBinder) iBinder;
-        Log.i("freefall" , "service connected");
-        retrieveBoard("00:11:22:33:FF:EE");
+
+
+    public long addNewContact(String contact){
+        ContentValues cv = new ContentValues();
+        cv.put(ContactContract.COLUMN_CONTACT,contact);
+        return sql.insert(ContactContract.TABLE_NAME,null,cv);
     }
 
-    @Override
-    public void onServiceDisconnected(ComponentName componentName) {
-
-    }
-    public void retrieveBoard(final String macAdd) {
-
-        final BluetoothManager btManager=
-                (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-        final BluetoothDevice remoteDevice=
-                btManager.getAdapter().getRemoteDevice(macAdd);
-
-        // Create a MetaWear board object for the Bluetooth Device
-        board= serviceBinder.getMetaWearBoard(remoteDevice);
-        board.connectAsync().onSuccessTask(new Continuation<Void, Task<Void>>() {
-            @Override
-            public Task<Void> then(Task<Void> task) throws Exception {
-               if(task.isFaulted()){
-                   Log.i("Free Fall" , "Fail" + task.getError());
-               }else{
-                   Log.i("Free Fall" , "connected to " + macAdd);
-               }
-                Accelerometer accelerometer= board.getModule(Accelerometer.class);
-                accelerometer.configure()
-                        .odr(25f)       // Set sampling frequency to 25Hz, or closest valid ODR
-                        .range(4f)      // Set data range to +/-4g, or closet valid range
-                        .commit();
-               return accelerometer.acceleration().addRouteAsync(new RouteBuilder() {
-                   @Override
-                   public void configure(RouteComponent routeComponent) {
-                       routeComponent.stream(new Subscriber() {
-                           @Override
-                           public void apply(Data data, Object... env) {
-                               System.out.println("+++++++++++++++++++++++++++++");
-                               Log.i("MainActivity", data.value(Acceleration.class).toString());
-                               System.out.println("+++++++++++++++++++++++++++++");
-                           }
-                       });
-                   }
-               }).continueWith(new Continuation<Route, Void>() {
-                   @Override
-                   public Void then(Task<Route> task) throws Exception {
-                       accelerometer.acceleration().start();
-                       accelerometer.start();
-                       return null;
-                   }
-               });
-            }
-        });
-
-
+    public void removeContact(String contact){
+        sql.delete(ContactContract.TABLE_NAME, "contact"+"=?",new String[]{contact});
+        Toast.makeText(getApplicationContext(),"Number Deleted!!",Toast.LENGTH_SHORT).show();
     }
 }
