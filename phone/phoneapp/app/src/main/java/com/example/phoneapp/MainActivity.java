@@ -1,30 +1,25 @@
 package com.example.phoneapp;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-
 import android.Manifest;
-import android.annotation.SuppressLint;
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothManager;
-import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
-import android.os.Build;
+import android.net.Uri;
 import android.os.Bundle;
-import android.os.IBinder;
-import android.provider.Settings;
+import android.support.v4.app.*;
+import android.support.v4.*;
+import android.support.*;
+import android.telephony.SmsManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -33,31 +28,22 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
-import com.mbientlab.metawear.Data;
-import com.mbientlab.metawear.Route;
-import com.mbientlab.metawear.Subscriber;
-import com.mbientlab.metawear.builder.RouteBuilder;
-import com.mbientlab.metawear.builder.RouteComponent;
-import com.mbientlab.metawear.builder.filter.Comparison;
-import com.mbientlab.metawear.builder.filter.ThresholdOutput;
-import com.mbientlab.metawear.builder.function.Function1;
-import com.mbientlab.metawear.data.Acceleration;
-import com.mbientlab.metawear.module.Accelerometer;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.mbientlab.metawear.MetaWearBoard;
-import com.mbientlab.metawear.android.BtleService;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+
+import com.google.android.gms.*;
+import com.google.android.gms.*;
+import com.google.android.gms.common.api.GoogleApiClient;
 
 import java.util.ArrayList;
+import java.util.List;
 
-import bolts.Continuation;
-import bolts.Task;
+public class MainActivity extends AppCompatActivity {
 
-
-public class MainActivity extends AppCompatActivity implements IBaseGpsListener {
     private static final int MY_PERMISSIONS_REQUEST_FINE = 2;
 
     private Button start,stop,addContacts;
@@ -65,16 +51,13 @@ public class MainActivity extends AppCompatActivity implements IBaseGpsListener 
     EditText edit;
     private SQLiteDatabase sql;
     String provider;
-    FirebaseDatabase database = FirebaseDatabase.getInstance();
-    DatabaseReference myRef = database.getReference("Heart rate");
-    private static final int PERMISSION_LOCATION = 1000;
-    TextView tv_location;
-    Button b_loction;
-    TextView getData;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         Log.d("Before Permission Check", "onCreate: ");
 
         //SMS and GPS Permission
@@ -89,30 +72,11 @@ public class MainActivity extends AppCompatActivity implements IBaseGpsListener 
         Log.d("After Permission Check", "onCreate:");
 
         start = (Button) findViewById(R.id.start);
-        stop = (Button) findViewById(R.id.end);
-        addContacts = (Button) findViewById(R.id.addContacts);
-        lv = (ListView) findViewById(R.id.lv);
-        edit = (EditText) findViewById(R.id.edit);
+        stop = (Button) findViewById(R.id.stop);
+        lv = (ListView) findViewById(R.id.contacts);
+        edit = (EditText) findViewById(R.id.editText);
+        addContacts = (Button) findViewById(R.id.add);
 
-        //get location
-        tv_location = findViewById(R.id.tv_Loction);
-        b_loction = findViewById(R.id.b_loction);
-        getData = findViewById(R.id.getData);
-        b_loction.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                //check for location permission
-                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
-                        != PackageManager.PERMISSION_GRANTED){
-                    requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION} , PERMISSION_LOCATION);
-                }else{
-                    showLocation();
-                }
-
-            }
-        });
         DBHelper dpHelper = new DBHelper(this);
         sql = dpHelper.getWritableDatabase();
         Cursor cursor = getAllContacts();
@@ -131,9 +95,7 @@ public class MainActivity extends AppCompatActivity implements IBaseGpsListener 
                 int icount = mcursor.getInt(0);
                 if(icount>0){
                     Toast.makeText(getApplicationContext(),"Safe riding! We track you for safety",Toast.LENGTH_SHORT).show();
-                    Intent intent= new Intent(getApplicationContext(), Fall.class);
-                    startService(intent);
-                    System.out.println(startService(intent));
+                    startService(new Intent(getApplicationContext(), IService2.class));
                 }else{
                     Toast.makeText(getApplicationContext(),"Add at least one contact then try again",Toast.LENGTH_SHORT).show();
                 }
@@ -144,9 +106,7 @@ public class MainActivity extends AppCompatActivity implements IBaseGpsListener 
             @Override
             public void onClick(View view) {
                 Log.d("Stop Button", "Pressed");
-                Intent intent= new Intent(getApplicationContext(), Fall.class);
-                stopService(intent);
-                System.out.println(String.valueOf(startService(intent)));
+                stopService(new Intent(getApplicationContext(), IService2.class));
             }
         });
 
@@ -206,61 +166,23 @@ public class MainActivity extends AppCompatActivity implements IBaseGpsListener 
     public Cursor getAllContacts(){
         return sql.query(ContactContract.TABLE_NAME,null,null,null,null,null,ContactContract.COLUMN_CONTACT);
     }
+
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if(requestCode == PERMISSION_LOCATION){
-            if(grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                showLocation();
-            }else {
-                Toast.makeText(this, "Permission not Granteded!", Toast.LENGTH_SHORT).show();
-                finish();
-            }
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu,menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int menuItemThatwasSelected = item.getItemId();
+        if(menuItemThatwasSelected == R.string.action_contacts){
+            Context context = MainActivity.this;
+            startActivity(new Intent(this, ContactActivity.class));
+            return true;
         }
+        return super.onOptionsItemSelected(item);
     }
-
-    @SuppressLint("MissingPermission")
-    private void showLocation(){
-        LocationManager locationManager = (LocationManager)  getSystemService(Context.LOCATION_SERVICE);
-        if(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
-        tv_location.setText("Loading Location");
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER , 0 , 0  , this);
-        }else{
-            Toast.makeText(this, "enable GPS", Toast.LENGTH_SHORT).show();
-            startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
-        }
-    }
-
-    private String hereLocation(Location Location){
-        return  "let: " + Location.getLatitude() + "\n Lon" + Location.getLongitude();
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        tv_location.setText(hereLocation(location));
-    }
-
-    @Override
-    public void onProviderDisabled(String provider) {
-
-    }
-
-    @Override
-    public void onProviderEnabled(String provider) {
-
-    }
-
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-
-    }
-
-    @Override
-    public void onGpsStatusChanged(int event) {
-
-    }
-
-
 
     public long addNewContact(String contact){
         ContentValues cv = new ContentValues();

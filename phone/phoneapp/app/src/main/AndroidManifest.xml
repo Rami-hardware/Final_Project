@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.SEND_SMS" />
 
 
     <application
@@ -23,7 +24,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name="com.mbientlab.metawear.android.BtleService" />
+        <service android:name=".IService2"
+            android:enabled="true"
+            android:exported="true">
+        </service>
     </application>
 
 </manifest>

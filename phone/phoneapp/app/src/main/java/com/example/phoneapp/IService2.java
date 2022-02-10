@@ -20,25 +20,28 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+
 import android.telephony.SmsManager;
 import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
+
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
-import com.google.android.gms.common.api.GoogleApiClient;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class Fall extends Service implements SensorEventListener {
+public class IService2 extends Service implements SensorEventListener {
 
     private SQLiteDatabase sql;
     String[] projection = {
             ContactContract.COLUMN_CONTACT
     };
+
 
     Handler handler = new Handler(Looper.getMainLooper());
     private Handler mPeriodicEventHandler = new Handler();
@@ -180,7 +183,7 @@ public class Fall extends Service implements SensorEventListener {
 
                 @Override
                 public void run() {
-                    Toast.makeText(Fall.this.getApplicationContext(), "No GPS Permission!!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(IService2.this.getApplicationContext(), "No GPS Permission!!", Toast.LENGTH_SHORT).show();
                 }
             });
         }
@@ -192,7 +195,7 @@ public class Fall extends Service implements SensorEventListener {
 
                 @Override
                 public void run() {
-                    Toast.makeText(Fall.this.getApplicationContext(), "No GPS Permission", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(IService2.this.getApplicationContext(), "No GPS Permission", Toast.LENGTH_SHORT).show();
                 }
             });
         }
@@ -438,7 +441,7 @@ public class Fall extends Service implements SensorEventListener {
 
                             @Override
                             public void run() {
-                                Toast.makeText(Fall.this.getApplicationContext(), "Sensed Danger! Sending SMS", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(IService2.this.getApplicationContext(), "Sensed Danger! Sending SMS", Toast.LENGTH_SHORT).show();
                             }
                         });
 //                    Toast.makeText(getApplicationContext(), "Sensed Danger! Sending SMS", Toast.LENGTH_SHORT).show();
@@ -471,7 +474,7 @@ public class Fall extends Service implements SensorEventListener {
                         handler.post(new Runnable() {
                             @Override
                             public void run() {
-                                Toast.makeText(Fall.this.getApplicationContext(), "Sudden Movement! But looks safe", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(IService2.this.getApplicationContext(), "Sudden Movement! But looks safe", Toast.LENGTH_SHORT).show();
                             }
                         });
                         sendCount++;
