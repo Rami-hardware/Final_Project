@@ -36,12 +36,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class IService2 extends Service implements SensorEventListener {
-
-    private SQLiteDatabase sql;
-    String[] projection = {
-            ContactContract.COLUMN_CONTACT
-    };
-
+    Intent i=new Intent(this,MainActivity.class);
 
     Handler handler = new Handler(Looper.getMainLooper());
     private Handler mPeriodicEventHandler = new Handler();
@@ -97,20 +92,12 @@ public class IService2 extends Service implements SensorEventListener {
     LocationListener locationListener;
 
     //SMS Variables
-    SmsManager smsManager = SmsManager.getDefault();
-    String phoneNum = "8503391620";
-    String textMsg;
-    private String prevNumber;
-    private Float x, y, z;
-    private static final int MY_PERMISSIONS_REQUEST_SEND_SMS = 0;
 
-    private Runnable doPeriodicTask = new Runnable() {
-        public void run() {
-            Log.d("Delay", "Delay Ended**********");
-            Log.d("Updating flag", "run: ");
-            sentRecently = 'N';
+
+    private Runnable doPeriodicTask = () -> {
+        Log.d("Fall :", "Person up again");
+        sentRecently = 'N';
 //            mPeriodicEventHandler.postDelayed(doPeriodicTask, PERIODIC_EVENT_TIMEOUT);
-        }
     };
 
 
@@ -145,10 +132,6 @@ public class IService2 extends Service implements SensorEventListener {
     @Override
     public int onStartCommand(Intent intent, int flag, int startId) {
         Log.d("Starting work", "OnStart");
-
-        DBHelper dpHelper = new DBHelper(this);
-        sql = dpHelper.getReadableDatabase();
-
         // Acquire a reference to the system Location Manager
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
@@ -437,51 +420,11 @@ public class IService2 extends Service implements SensorEventListener {
                     if (degreeFloat > 30 || degreeFloat2 > 30) {
                         Log.d("Degree1:", "" + degreeFloat);
                         Log.d("Degree2:", "" + degreeFloat2);
-                        handler.post(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                Toast.makeText(IService2.this.getApplicationContext(), "Sensed Danger! Sending SMS", Toast.LENGTH_SHORT).show();
-                            }
-                        });
-//                    Toast.makeText(getApplicationContext(), "Sensed Danger! Sending SMS", Toast.LENGTH_SHORT).show();
-
-                        Cursor cursor = sql.query(ContactContract.TABLE_NAME, projection, null, null, null, null, null);
-                        List itemIds = new ArrayList<>();
-                        while (cursor.moveToNext()) {
-                            long itemId = cursor.getLong(
-                                    cursor.getColumnIndexOrThrow(ContactContract.COLUMN_CONTACT));
-                            itemIds.add(itemId);
-                        }
-                        cursor.close();
-                        Iterator it = itemIds.iterator();
-
-                        while (it.hasNext()) {
-//                        if (sendCount < 5) {
-//                                textMsg = "Sensed Danger here => "+"http://maps.google.com/?q=<"+latitude+">,<"+longitude+">";
-
-                            phoneNum = it.next().toString();
-                            if (phoneNum != prevNumber && phoneNum != null) {
-                                textMsg = "Sensed Danger here => " + "http://maps.google.com/?q=<" + String.valueOf(latitude) + ">,<" + String.valueOf(longitude) + ">";
-                                Log.d("Sending-MSG", "onSensorChanged: " + sendCount);
-                                smsManager.sendTextMessage(phoneNum, null, textMsg, null, null);
-                                prevNumber = phoneNum;
-                                sendCount++;
-                            }
-//                        }
-                        }
-                    } else {
-                        handler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                Toast.makeText(IService2.this.getApplicationContext(), "Sudden Movement! But looks safe", Toast.LENGTH_SHORT).show();
-                            }
-                        });
-                        sendCount++;
                     }
                     sentRecently='Y';
-                    Log.d("Delay", "Delay Start**********");
-                    mPeriodicEventHandler.postDelayed(doPeriodicTask, PERIODIC_EVENT_TIMEOUT);
+
+                    Log.d("Falling ", "Person has falling");
+                    mPeriodicEventHandler.postDelayed(doPeriodicTask, 150000);
                 }
             }
             gyroMatrix = getRotationMatrixFromOrientation(fusedOrientation);
