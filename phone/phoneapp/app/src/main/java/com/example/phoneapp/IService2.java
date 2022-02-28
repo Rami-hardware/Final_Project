@@ -34,12 +34,18 @@ import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 public class IService2 extends Service implements SensorEventListener {
+    FirebaseDatabase database = FirebaseDatabase.getInstance();
+    DatabaseReference myRef1 = database.getReference("Falling");
+    DatabaseReference myRef2 = database.getReference("Location");
     Handler handler = new Handler(Looper.getMainLooper());
     private Handler mPeriodicEventHandler = new Handler();
     private final int PERIODIC_EVENT_TIMEOUT = 3000;
@@ -85,6 +91,7 @@ public class IService2 extends Service implements SensorEventListener {
     private Runnable doPeriodicTask = () -> {
         Log.d("Fall :", "Person up again");
         sentRecently = 'N';
+        myRef1.setValue("Stand");
 //            mPeriodicEventHandler.postDelayed(doPeriodicTask, PERIODIC_EVENT_TIMEOUT);
     };
     @Nullable
@@ -108,10 +115,10 @@ public class IService2 extends Service implements SensorEventListener {
         locationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
-                //latitude = location.getLatitude();
-                //longitude = location.getLongitude();
-                //Log.d("latitude changed", "" + latitude);
-                //Log.d("longitude changed", "" + longitude);
+                latitude = location.getLatitude();
+                longitude = location.getLongitude();
+                Log.d("latitude changed", "" + latitude);
+                Log.d("longitude changed", "" + longitude);
             }
 
             @Override
@@ -154,7 +161,8 @@ public class IService2 extends Service implements SensorEventListener {
         longitude = locationManager.getLastKnownLocation(locationProvider).getLongitude();
         Log.d("latitude", "" + latitude);
         Log.d("longitude", "" + longitude);
-
+        myRef2.child("lat").setValue(latitude);
+        myRef2.child("Long").setValue(longitude);
         onTaskRemoved(intent);
         senSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         senAccelerometer = senSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -357,24 +365,24 @@ public class IService2 extends Service implements SensorEventListener {
             fusedOrientation[0] =
                     FILTER_COEFFICIENT * gyroOrientation[0]
                             + oneMinusCoeff * accMagOrientation[0];
-            Log.d("X:", ""+fusedOrientation[0]);
+           // Log.d("X:", ""+fusedOrientation[0]);
 
             fusedOrientation[1] =
                     FILTER_COEFFICIENT * gyroOrientation[1]
                             + oneMinusCoeff * accMagOrientation[1];
-            Log.d("Y:", ""+fusedOrientation[1]);
+            // Log.d("Y:", ""+fusedOrientation[1]);
             fusedOrientation[2] =
                     FILTER_COEFFICIENT * gyroOrientation[2]
                             + oneMinusCoeff * accMagOrientation[2];
-            Log.d("Z:", ""+fusedOrientation[2]);
+          //  Log.d("Z:", ""+fusedOrientation[2]);
 
             //**********Sensing Danger**********
             double SMV = Math.sqrt(accel[0] * accel[0] + accel[1] * accel[1] + accel[2] * accel[2]);
-                Log.d("SMV:", ""+SMV);
+            //Log.d("SMV:", ""+SMV);
             if (SMV > 25) {
                 if (sentRecently == 'N') {
-                    Log.d("Accelerometer vector:", "" + SMV);
-                    degreeFloat = (float) (fusedOrientation[1] * 180 / Math.PI);
+                   // Log.d("Accelerometer vector:", "" + SMV);
+                   // degreeFloat = (float) (fusedOrientation[1] * 180 / Math.PI);
                     degreeFloat2 = (float) (fusedOrientation[2] * 180 / Math.PI);
                     if (degreeFloat < 0)
                         degreeFloat = degreeFloat * -1;
@@ -382,16 +390,18 @@ public class IService2 extends Service implements SensorEventListener {
                         degreeFloat2 = degreeFloat2 * -1;
                     Log.d("Degrees:", "" + degreeFloat);
                     if (degreeFloat > 30 || degreeFloat2 > 30) {
-                        Log.d("Degree1:", "" + degreeFloat);
-                        Log.d("Degree2:", "" + degreeFloat2);
+                       // Log.d("Degree1:", "" + degreeFloat);
+                      //  Log.d("Degree2:", "" + degreeFloat2);
                     }
                     sentRecently = 'Y';
-                        Log.d("Falling ", "Person has falling");
-                        mPeriodicEventHandler.postDelayed(doPeriodicTask, 10000);
-                    }
+
+                    Log.d("Falling ", "Person has falling");
+                    myRef1.setValue("Fall");
+                    mPeriodicEventHandler.postDelayed(doPeriodicTask, 1000);
                 }
-                gyroMatrix = getRotationMatrixFromOrientation(fusedOrientation);
-                System.arraycopy(fusedOrientation, 0, gyroOrientation, 0, 3);
             }
+            gyroMatrix = getRotationMatrixFromOrientation(fusedOrientation);
+            System.arraycopy(fusedOrientation, 0, gyroOrientation, 0, 3);
         }
+    }
 }
