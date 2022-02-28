@@ -24,7 +24,10 @@
         </activity>
         <service android:name=".IService2"
             android:enabled="true"
-            android:exported="true">
+            android:exported="true"
+            android:foregroundServiceType="location"
+            >
+
         </service>>
     </application>
 

@@ -119,6 +119,7 @@ public class IService2 extends Service implements SensorEventListener {
                 longitude = location.getLongitude();
                 Log.d("latitude changed", "" + latitude);
                 Log.d("longitude changed", "" + longitude);
+
             }
 
             @Override
@@ -145,7 +146,7 @@ public class IService2 extends Service implements SensorEventListener {
                 }
             });
         }
-        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 5000, 0, locationListener);
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 3000, 0, locationListener);
 
         String locationProvider = LocationManager.NETWORK_PROVIDER;
         if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -379,7 +380,7 @@ public class IService2 extends Service implements SensorEventListener {
             //**********Sensing Danger**********
             double SMV = Math.sqrt(accel[0] * accel[0] + accel[1] * accel[1] + accel[2] * accel[2]);
             //Log.d("SMV:", ""+SMV);
-            if (SMV > 25) {
+            if (SMV > 50) {
                 if (sentRecently == 'N') {
                    // Log.d("Accelerometer vector:", "" + SMV);
                    // degreeFloat = (float) (fusedOrientation[1] * 180 / Math.PI);
@@ -397,7 +398,7 @@ public class IService2 extends Service implements SensorEventListener {
 
                     Log.d("Falling ", "Person has falling");
                     myRef1.setValue("Fall");
-                    mPeriodicEventHandler.postDelayed(doPeriodicTask, 1000);
+                    mPeriodicEventHandler.postDelayed(doPeriodicTask, 10000);
                 }
             }
             gyroMatrix = getRotationMatrixFromOrientation(fusedOrientation);
