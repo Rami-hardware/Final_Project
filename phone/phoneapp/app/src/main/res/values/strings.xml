@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">phone app</string>
     <string name="action_contacts"></string>
+    <string name="channel_description">null</string>
+    <string name="channel_name">null2</string>
+    <string name="msg_token_fmt" formatted="true">%s</string>
 </resources>

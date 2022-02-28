@@ -1,6 +1,9 @@
 package com.example.phoneapp;
 
 import android.Manifest;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -15,6 +18,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.*;
 import android.support.v4.*;
@@ -32,43 +36,34 @@ import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
 
 import com.google.android.gms.*;
 import com.google.android.gms.*;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.messaging.FirebaseMessagingService;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.security.auth.callback.CallbackHandler;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final int MY_PERMISSIONS_REQUEST_FINE = 2;
-
-    private Button start,stop;
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        Log.d("Before Permission Check", "onCreate: ");
-
-        //SMS and GPS Permission
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
-
-            int PERMISSION_ALL = 1;
-            String[] PERMISSIONS = {Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.SEND_SMS};
-            ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
-//            return;
-        }
         Log.d("After Permission Check", "onCreate:");
-                Intent intent =  new Intent(getApplicationContext(), IService2.class);
-                startService(intent);
-            }
-
+        Intent intent = new Intent(getApplicationContext(), IService2.class);
+        startService(intent);
     }
+
+}

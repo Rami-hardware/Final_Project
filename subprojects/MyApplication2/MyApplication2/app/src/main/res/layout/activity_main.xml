@@ -1,0 +1,33 @@
+<androidx.wear.widget.BoxInsetLayout
+xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:app="http://schemas.android.com/apk/res-auto"
+xmlns:tools="http://schemas.android.com/tools"
+android:id="@+id/watch_view_stub"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+tools:context="com.example.myapplication.MainActivity"
+tools:deviceIds="wear">
+
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="@dimen/inner_frame_layout_padding"
+        app:layout_boxedEdges="all"/>
+
+    <TextView
+        android:id="@+id/step_count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="data is sending" />
+    <TextView
+        android:id="@+id/step_detect"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="data is sending" />
+    <TextView
+        android:id="@+id/heart"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="data is sending" />
+</androidx.wear.widget.BoxInsetLayout>

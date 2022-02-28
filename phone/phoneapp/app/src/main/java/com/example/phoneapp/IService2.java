@@ -2,6 +2,9 @@ package com.example.phoneapp;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -16,6 +19,7 @@ import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -28,20 +32,17 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-
 public class IService2 extends Service implements SensorEventListener {
-    Intent i=new Intent(this,MainActivity.class);
-
     Handler handler = new Handler(Looper.getMainLooper());
     private Handler mPeriodicEventHandler = new Handler();
     private final int PERIODIC_EVENT_TIMEOUT = 3000;
-
     private Timer fuseTimer = new Timer();
     private int sendCount = 0;
     private char sentRecently = 'N';
@@ -52,30 +53,21 @@ public class IService2 extends Service implements SensorEventListener {
     private float degreeFloat2;
     // rotation matrix from gyro data
     private float[] gyroMatrix = new float[9];
-
     // orientation angles from gyro matrix
     private float[] gyroOrientation = new float[3];
-
     // magnetic field vector
     private float[] magnet = new float[3];
-
     // accelerometer vector
     private float[] accel = new float[3];
-
     // orientation angles from accel and magnet
     private float[] accMagOrientation = new float[3];
-
     // final orientation angles from sensor fusion
     private float[] fusedOrientation = new float[3];
-
     // accelerometer and magnetometer based rotation matrix
     private float[] rotationMatrix = new float[9];
-
     public static final float EPSILON = 0.000000001f;
-
     public static final int TIME_CONSTANT = 30;
     public static final float FILTER_COEFFICIENT = 0.98f;
-
     private static final float NS2S = 1.0f / 1000000000.0f;
     private float timestamp;
     private boolean initState = true;
@@ -90,45 +82,22 @@ public class IService2 extends Service implements SensorEventListener {
     double latitude, longitude;
     LocationManager locationManager;
     LocationListener locationListener;
-
-    //SMS Variables
-
-
     private Runnable doPeriodicTask = () -> {
         Log.d("Fall :", "Person up again");
         sentRecently = 'N';
 //            mPeriodicEventHandler.postDelayed(doPeriodicTask, PERIODIC_EVENT_TIMEOUT);
     };
-
-
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         return null;
     }
-
     @Override
     public void onCreate() {
 
         Log.d("Initialing Service", "OnCreate");
         super.onCreate();
     }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        mPeriodicEventHandler.removeCallbacks(doPeriodicTask);
-        Log.d("Stopping Service", "OnDestroy");
-        senSensorManager.unregisterListener(this);
-        sendCount = 0;
-        Toast.makeText(this, "Stopped Tracking", Toast.LENGTH_SHORT).show();
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-        }else {
-            locationManager.removeUpdates(locationListener);
-        }
-    }
-
     @Override
     public int onStartCommand(Intent intent, int flag, int startId) {
         Log.d("Starting work", "OnStart");
@@ -139,17 +108,16 @@ public class IService2 extends Service implements SensorEventListener {
         locationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
-                latitude = location.getLatitude();
-                longitude = location.getLongitude();
-                Log.d("latitude changed", "" + latitude);
-                Log.d("longitude changed", "" + longitude);
+                //latitude = location.getLatitude();
+                //longitude = location.getLongitude();
+                //Log.d("latitude changed", "" + latitude);
+                //Log.d("longitude changed", "" + longitude);
             }
 
             @Override
             public void onStatusChanged(String provider, int status, Bundle extras) {
 
             }
-
             @Override
             public void onProviderEnabled(String provider) {
             }
@@ -184,8 +152,8 @@ public class IService2 extends Service implements SensorEventListener {
         }
         latitude = locationManager.getLastKnownLocation(locationProvider).getLatitude();
         longitude = locationManager.getLastKnownLocation(locationProvider).getLongitude();
-        Log.d("latitude", ""+latitude);
-        Log.d("longitude", ""+longitude);
+        Log.d("latitude", "" + latitude);
+        Log.d("longitude", "" + longitude);
 
         onTaskRemoved(intent);
         senSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -322,14 +290,12 @@ public class IService2 extends Service implements SensorEventListener {
         float[] xM = new float[9];
         float[] yM = new float[9];
         float[] zM = new float[9];
-
         float sinX = (float) Math.sin(o[1]);
         float cosX = (float) Math.cos(o[1]);
         float sinY = (float) Math.sin(o[2]);
         float cosY = (float) Math.cos(o[2]);
         float sinZ = (float) Math.sin(o[0]);
         float cosZ = (float) Math.cos(o[0]);
-
         // rotation about x-axis (pitch)
         xM[0] = 1.0f;
         xM[1] = 0.0f;
@@ -340,7 +306,6 @@ public class IService2 extends Service implements SensorEventListener {
         xM[6] = 0.0f;
         xM[7] = -sinX;
         xM[8] = cosX;
-
         // rotation about y-axis (roll)
         yM[0] = cosY;
         yM[1] = 0.0f;
@@ -351,7 +316,6 @@ public class IService2 extends Service implements SensorEventListener {
         yM[6] = -sinY;
         yM[7] = 0.0f;
         yM[8] = cosY;
-
         // rotation about z-axis (azimuth)
         zM[0] = cosZ;
         zM[1] = sinZ;
@@ -393,20 +357,20 @@ public class IService2 extends Service implements SensorEventListener {
             fusedOrientation[0] =
                     FILTER_COEFFICIENT * gyroOrientation[0]
                             + oneMinusCoeff * accMagOrientation[0];
-//            Log.d("X:", ""+fusedOrientation[0]);
+            Log.d("X:", ""+fusedOrientation[0]);
 
             fusedOrientation[1] =
                     FILTER_COEFFICIENT * gyroOrientation[1]
                             + oneMinusCoeff * accMagOrientation[1];
-//            Log.d("Y:", ""+fusedOrientation[1]);
+            Log.d("Y:", ""+fusedOrientation[1]);
             fusedOrientation[2] =
                     FILTER_COEFFICIENT * gyroOrientation[2]
                             + oneMinusCoeff * accMagOrientation[2];
-//            Log.d("Z:", ""+fusedOrientation[2]);
+            Log.d("Z:", ""+fusedOrientation[2]);
 
             //**********Sensing Danger**********
             double SMV = Math.sqrt(accel[0] * accel[0] + accel[1] * accel[1] + accel[2] * accel[2]);
-//                Log.d("SMV:", ""+SMV);
+                Log.d("SMV:", ""+SMV);
             if (SMV > 25) {
                 if (sentRecently == 'N') {
                     Log.d("Accelerometer vector:", "" + SMV);
@@ -416,19 +380,18 @@ public class IService2 extends Service implements SensorEventListener {
                         degreeFloat = degreeFloat * -1;
                     if (degreeFloat2 < 0)
                         degreeFloat2 = degreeFloat2 * -1;
-//                    Log.d("Degrees:", "" + degreeFloat);
+                    Log.d("Degrees:", "" + degreeFloat);
                     if (degreeFloat > 30 || degreeFloat2 > 30) {
                         Log.d("Degree1:", "" + degreeFloat);
                         Log.d("Degree2:", "" + degreeFloat2);
                     }
-                    sentRecently='Y';
-
-                    Log.d("Falling ", "Person has falling");
-                    mPeriodicEventHandler.postDelayed(doPeriodicTask, 150000);
+                    sentRecently = 'Y';
+                        Log.d("Falling ", "Person has falling");
+                        mPeriodicEventHandler.postDelayed(doPeriodicTask, 10000);
+                    }
                 }
+                gyroMatrix = getRotationMatrixFromOrientation(fusedOrientation);
+                System.arraycopy(fusedOrientation, 0, gyroOrientation, 0, 3);
             }
-            gyroMatrix = getRotationMatrixFromOrientation(fusedOrientation);
-            System.arraycopy(fusedOrientation, 0, gyroOrientation, 0, 3);
         }
-    }
 }

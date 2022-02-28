@@ -27,10 +27,8 @@
 
      override fun onCreate(savedInstanceState: Bundle?) {
          super.onCreate(savedInstanceState)
-
          binding = ActivityMainBinding.inflate(layoutInflater)
          setContentView(binding.root)
-
          permissionLauncher =
              registerForActivityResult(ActivityResultContracts.RequestPermission()) { result ->
                  when (result) {
@@ -60,12 +58,10 @@
              }
          }
      }
-
      override fun onStart() {
          super.onStart()
          permissionLauncher.launch(android.Manifest.permission.BODY_SENSORS)
      }
-
      private fun updateViewVisiblity(uiState: UiState) {
          // These views are visible when heart rate capability is not available.
          (uiState is UiState.HeartRateNotAvailable).let {
@@ -74,10 +70,8 @@
          }
          // These views are visible when the capability is available.
          (uiState is UiState.HeartRateAvailable).let {
-
              binding.lastMeasuredLabel.isVisible = it
              binding.lastMeasuredValue.isVisible = it
-
          }
      }
  }
