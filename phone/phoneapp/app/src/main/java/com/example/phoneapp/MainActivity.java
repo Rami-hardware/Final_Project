@@ -65,9 +65,7 @@ import javax.security.auth.callback.CallbackHandler;
 
 public class MainActivity extends AppCompatActivity {
     FirebaseDatabase database = FirebaseDatabase.getInstance();
-    DatabaseReference myRef1 = database.getReference("HeartRate");
-    DatabaseReference myRef2 = database.getReference("Falling");
-    DatabaseReference myRef3 = database.getReference("Location");
+    DatabaseReference myRef = database.getReference("Uesrs").child("faisal@faisal1com");
     private static final int MY_PERMISSIONS_REQUEST_FINE = 2;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,51 +73,23 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         //displaying location
         TextView loc = (TextView) findViewById(R.id.loc);
-        myRef3.addValueEventListener(new ValueEventListener() {
-
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if(snapshot.exists()){
-                    String data =  snapshot.child("lat").getValue().toString();
-                    String data2 = snapshot.child("Long").getValue().toString();
-                    loc.setText("lat " +data + " Long " + data2 );
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Log.w("TAG", "Failed to read value.", error.toException());
-            }
-        });
-        //displaying heart
         TextView heart = (TextView) findViewById(R.id.Heart);
-        myRef1.addValueEventListener(new ValueEventListener() {
-
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if(snapshot.exists()){
-                    String data =  snapshot.getValue().toString();
-                    heart.setText("Heart rate " +data);
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Log.w("TAG", "Failed to read value.", error.toException());
-            }
-        });
-        //display Falling
-
         TextView Falling = (TextView) findViewById(R.id.Fall);
-        myRef2.addValueEventListener(new ValueEventListener() {
+        myRef.addValueEventListener(new ValueEventListener() {
 
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if(snapshot.exists()){
-                    String data =  snapshot.getValue().toString();
-                    Falling.setText("Fall: " +data);
+                    String lat =  snapshot.child("Location").child("lat").getValue().toString();
+                    String Long = snapshot.child("Location").child("Long").getValue().toString();
+                    String Fall =  snapshot.child("Fall").getValue().toString();
+                    String Heart =  snapshot.child("HeartRate").getValue().toString();
+                    heart.setText("Heart rate " +Heart);
+                    Falling.setText("Fall: " +Fall);
+                    loc.setText("lat " +lat + " Long " + Long );
+
                 }
-            }
+                }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
@@ -131,5 +101,4 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(getApplicationContext(), IService2.class);
         startService(intent);
     }
-
 }

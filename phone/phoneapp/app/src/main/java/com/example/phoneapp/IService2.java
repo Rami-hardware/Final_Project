@@ -44,14 +44,15 @@ import java.util.Timer;
 import java.util.TimerTask;
 public class IService2 extends Service implements SensorEventListener {
     FirebaseDatabase database = FirebaseDatabase.getInstance();
-    DatabaseReference myRef1 = database.getReference("Falling");
-    DatabaseReference myRef2 = database.getReference("Location");
+    DatabaseReference myRef = database.getReference("Users");
     Handler handler = new Handler(Looper.getMainLooper());
     private Handler mPeriodicEventHandler = new Handler();
     private final int PERIODIC_EVENT_TIMEOUT = 3000;
     private Timer fuseTimer = new Timer();
     private int sendCount = 0;
     private char sentRecently = 'N';
+    private final int MIN_TIME = 1000; // Per 1sec will update the location
+    private final int MIN_DISTANCE = 1; // 1meter will be update the location
     //Three Sensor Fusion - Variables:
     // angular speeds from gyro
     private float[] gyro = new float[3];
@@ -91,7 +92,7 @@ public class IService2 extends Service implements SensorEventListener {
     private Runnable doPeriodicTask = () -> {
         Log.d("Fall :", "Person up again");
         sentRecently = 'N';
-        myRef1.setValue("Stand");
+        myRef.setValue("Stand");
 //            mPeriodicEventHandler.postDelayed(doPeriodicTask, PERIODIC_EVENT_TIMEOUT);
     };
     @Nullable
@@ -104,6 +105,7 @@ public class IService2 extends Service implements SensorEventListener {
 
         Log.d("Initialing Service", "OnCreate");
         super.onCreate();
+        getLocationUpdates();
     }
     @Override
     public int onStartCommand(Intent intent, int flag, int startId) {
@@ -162,8 +164,8 @@ public class IService2 extends Service implements SensorEventListener {
         longitude = locationManager.getLastKnownLocation(locationProvider).getLongitude();
         Log.d("latitude", "" + latitude);
         Log.d("longitude", "" + longitude);
-        myRef2.child("lat").setValue(latitude);
-        myRef2.child("Long").setValue(longitude);
+        myRef.child("faisal@faisal1com").child("Location").child("Lat").setValue(latitude);
+        myRef.child("faisal@faisal1com").child("Location").child("Long").setValue(longitude);
         onTaskRemoved(intent);
         senSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         senAccelerometer = senSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -174,7 +176,21 @@ public class IService2 extends Service implements SensorEventListener {
 
         return START_STICKY;
     }
+    private void getLocationUpdates() {
+        if(locationManager != null){
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED){
+                if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,MIN_TIME,MIN_DISTANCE, (LocationListener) this);
+                }else if(locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)){
+                    locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,MIN_TIME,MIN_DISTANCE, (LocationListener) this);
+                }else{
+                    Toast.makeText(this,"No provider enabled", Toast.LENGTH_SHORT).show();
+                }
 
+            }
+        }
+    }
     public void initListeners() {
         senSensorManager.registerListener(this,
                 senSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
@@ -397,7 +413,7 @@ public class IService2 extends Service implements SensorEventListener {
                     sentRecently = 'Y';
 
                     Log.d("Falling ", "Person has falling");
-                    myRef1.setValue("Fall");
+                    myRef.setValue("Fall");
                     mPeriodicEventHandler.postDelayed(doPeriodicTask, 10000);
                 }
             }
