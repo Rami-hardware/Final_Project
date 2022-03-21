@@ -65,7 +65,7 @@ import javax.security.auth.callback.CallbackHandler;
 
 public class MainActivity extends AppCompatActivity {
     FirebaseDatabase database = FirebaseDatabase.getInstance();
-    DatabaseReference myRef = database.getReference("Uesrs").child("faisal@faisal1com");
+    DatabaseReference myRef = database.getReference("Users").child("faisal@faisal1com");
     private static final int MY_PERMISSIONS_REQUEST_FINE = 2;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,20 +73,14 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         //displaying location
         TextView loc = (TextView) findViewById(R.id.loc);
-        TextView heart = (TextView) findViewById(R.id.Heart);
-        TextView Falling = (TextView) findViewById(R.id.Fall);
+
         myRef.addValueEventListener(new ValueEventListener() {
 
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if(snapshot.exists()){
-                    String lat =  snapshot.child("Location").child("lat").getValue().toString();
-                    String Long = snapshot.child("Location").child("Long").getValue().toString();
-                    String Fall =  snapshot.child("Fall").getValue().toString();
-                    String Heart =  snapshot.child("HeartRate").getValue().toString();
-                    heart.setText("Heart rate " +Heart);
-                    Falling.setText("Fall: " +Fall);
-                    loc.setText("lat " +lat + " Long " + Long );
+                    String lat =  snapshot.child("oldId").getValue().toString();
+                    loc.setText("this is my id: " +lat );
 
                 }
                 }

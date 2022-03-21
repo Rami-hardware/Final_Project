@@ -11,18 +11,6 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:id="@+id/loc"
-    android:text="ff"
+    android:text="please be hold"
     />
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/Heart"
-        android:text="ff"
-        />
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/Fall"
-        android:text="ff"
-        />
 </LinearLayout>
