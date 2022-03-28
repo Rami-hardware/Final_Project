@@ -1,0 +1,3 @@
+[submodule "MyApplication"]
+	path = MyApplication
+	url = https://github.com/Rami-hardware/notfy
