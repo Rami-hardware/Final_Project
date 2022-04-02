@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/home"
+        android:enabled="true"
+        android:icon="@drawable/home"
+        android:title="@string/favorites"/>
+    <item
+        android:id="@+id/Profile"
+        android:enabled="true"
+        android:icon="@drawable/face"
+        android:title="@string/favorites"/>
+    <item
+        android:id="@+id/settings"
+        android:enabled="true"
+        android:icon="@drawable/settings"
+        android:title="@string/favorites"/>
+    <item
+        android:id="@+id/Logs"
+        android:enabled="true"
+        android:icon="@drawable/history"
+        android:title="@string/favorites"/>
+
+</menu>

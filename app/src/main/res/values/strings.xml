@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">SalemApp</string>
+    <string name="Password">Password</string>
+    <string name="LoginAccount">Login</string>
+    <string name="newUserButton">Dont have an account?</string>
+    <string name="ForgetPassword">Forget Password?</string>
+    <string name="username">User NAME</string>
+    <string name="Email">Your email</string>
+    <string name="password">Enter your password</string>
+    <string name="Conformationpassword">Confirm your password</string>
+    <string name="RegisterNewAccount">Register</string>
+    <string name="HaveAccountButton">Have an Account?</string>
+    <string name="favorites">Tset</string>
+    <string name="HeartRateNumber">00.00</string>
+    <string name="channel_name">Name</string>
+    <string name="channel_description">des</string>
+</resources>
