@@ -17,7 +17,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void TrackingLocation(View view) {
-        Intent intent = new Intent(MainActivity.this, Tracking_location.class);
+        Intent intent = new Intent(MainActivity.this, TrackingLocation.class);
                 startActivity(intent);
     }
 
@@ -29,13 +29,13 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    public void Notifactions(View view) {
+    /*public void Notifactions(View view) {
         Intent intent = new Intent(MainActivity.this, Notifactions.class);
         startActivity(intent);
-    }
+    }*/
 
-    public void Alarm(View view) {
-        Intent intent = new Intent(MainActivity.this, Settings.class);
+    public void Fall_detection(View view) {
+        Intent intent = new Intent(MainActivity.this, Fall_detection.class);
         startActivity(intent);
     }
 }

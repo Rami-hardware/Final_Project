@@ -53,7 +53,7 @@ public class LoginPage extends AppCompatActivity {
                                  final String getPassword = snapshot.child(Email).child("Password").getValue(String.class);
 
                                  if (getPassword.equals(PasswordTextField)){
-                                     Toast.makeText(LoginPage.this, "Successfull signin",Toast.LENGTH_SHORT).show();
+                                     Toast.makeText(LoginPage.this, "Successfull login",Toast.LENGTH_SHORT).show();
 
                                      // main activity on success
                                      startActivity(new Intent(LoginPage.this, MainActivity.class));

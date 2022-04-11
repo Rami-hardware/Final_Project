@@ -12,6 +12,9 @@
     <string name="HaveAccountButton">Have an Account?</string>
     <string name="favorites">Tset</string>
     <string name="HeartRateNumber">00.00</string>
+    <string name="Fall">Fall</string>
+    <string name="name">stand</string>
     <string name="channel_name">Name</string>
     <string name="channel_description">des</string>
+    <string name="title_activity_tracking_location">TrackingLocation</string>
 </resources>
