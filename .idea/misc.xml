@@ -1,27 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="DesignSurface">
-    <option name="filePathToZoomLevelMap">
-      <map>
-        <entry key="app/src/main/res/drawable/home.xml" value="0.1205" />
-        <entry key="app/src/main/res/drawable/ic_launcher_background.xml" value="0.1875" />
-        <entry key="app/src/main/res/layout/activity_fall_detection.xml" value="0.31672027145606885" />
-        <entry key="app/src/main/res/layout/activity_heart_rate.xml" value="0.3474865678427876" />
-        <entry key="app/src/main/res/layout/activity_login_page.xml" value="0.22442474365234377" />
-        <entry key="app/src/main/res/layout/activity_main.xml" value="0.3244277954101563" />
-        <entry key="app/src/main/res/layout/activity_notifactions.xml" value="0.19519927536231885" />
-        <entry key="app/src/main/res/layout/activity_settings.xml" value="0.2644927536231884" />
-        <entry key="app/src/main/res/layout/activity_sign_up.xml" value="0.25" />
-        <entry key="app/src/main/res/layout/activity_tracking_location.xml" value="0.1466412309287251" />
-        <entry key="app/src/main/res/layout/activity_tracking_location2.xml" value="0.37604166666666666" />
-        <entry key="app/src/main/res/menu/bottom_navigation_menu.xml" value="0.3333333333333333" />
-      </map>
-    </option>
-  </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="Android Studio default JDK" project-jdk-type="JavaSDK">
-    <output url="file://$PROJECT_DIR$/build/classes" />
-  </component>
-  <component name="ProjectType">
-    <option name="id" value="Android" />
-  </component>
+  <component name="ExternalStorageConfigurationManager" enabled="true" />
 </project>
