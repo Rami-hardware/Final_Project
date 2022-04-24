@@ -66,30 +66,10 @@ import javax.security.auth.callback.CallbackHandler;
 public class MainActivity extends AppCompatActivity {
     FirebaseDatabase database = FirebaseDatabase.getInstance();
     DatabaseReference myRef = database.getReference("Users").child("faisal@faisal1com");
-    private static final int MY_PERMISSIONS_REQUEST_FINE = 2;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        //displaying location
-        TextView loc = (TextView) findViewById(R.id.loc);
-
-        myRef.addValueEventListener(new ValueEventListener() {
-
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if(snapshot.exists()){
-                    String lat =  snapshot.child("oldId").getValue().toString();
-                    loc.setText("this is my id: " +lat );
-
-                }
-                }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Log.w("TAG", "Failed to read value.", error.toException());
-            }
-        });
         //Start Fall and location
         Log.d("After Permission Check", "onCreate:");
         Intent intent = new Intent(getApplicationContext(), IService2.class);

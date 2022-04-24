@@ -102,11 +102,9 @@ public class IService2 extends Service implements SensorEventListener {
     }
     @Override
     public void onCreate() {
-
         Log.d("Initialing Service", "OnCreate");
         super.onCreate();
         getLocationUpdates();
-        myRef.child("faisal@faisal1com").child("oldId").setValue(3212022);
     }
     @Override
     public int onStartCommand(Intent intent, int flag, int startId) {

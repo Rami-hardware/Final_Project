@@ -38,17 +38,10 @@ public class MainActivity extends Activity implements SensorEventListener {
     DatabaseReference databaseReference;
 
     private TextView mHR;
-    private TextView tAccu;
-    private TextView txtConn;
     private ActivityMainBinding binding;
     private SensorManager mSensorManager;
     private Sensor mHeartRateSensor;
-    private SharedPreferences sharedPref;
-    private String currentAddr = "";
-    private boolean connected = true;
-
     private boolean state = false;
-
     private ConnectivityManager connectivityManager;
 
 
@@ -66,8 +59,7 @@ public class MainActivity extends Activity implements SensorEventListener {
         }
 
         mHR = binding.HR;
-        tAccu = binding.tAccu;
-        txtConn = binding.txtConnected;
+
 
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         mHeartRateSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
@@ -82,13 +74,8 @@ public class MainActivity extends Activity implements SensorEventListener {
         WindowManager.LayoutParams lp = getWindow().getAttributes();
         lp.screenBrightness = 0.3F;
         getWindow().setAttributes(lp);
-
         bindProcessToWifi();
         startMeasure();
-        final int Id =  5959;
-        txtConn.setText(String.valueOf(Id));
-        databaseReference = FirebaseDatabase.getInstance().getReference("Users").child("faisal@faisal1com");
-        databaseReference.child("watchId").setValue(Id);
     }
 
 
@@ -120,13 +107,14 @@ public class MainActivity extends Activity implements SensorEventListener {
         Log.d("HeartRate", "HeartRate test" + mHeartRate);
         databaseReference = FirebaseDatabase.getInstance().getReference("Users").child("faisal@faisal1com");
         databaseReference.child("HeartRate").setValue(mHeartRate);
-        tAccu.setText(Integer.toString(sensorEvent.accuracy));
+        
     }
 
     @Override
-    public void onAccuracyChanged(Sensor sensor, int i) {
-        tAccu.setText(Integer.toString(i));
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
     }
+
 
     @Override
     protected void onPause() {
